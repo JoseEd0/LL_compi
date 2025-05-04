@@ -176,6 +176,15 @@ def analizar_cadena(cadena, tabla, simbolo_inicial, terminales, no_terminales, f
     return pasos, errores == 0 and pasos[-1][3] == "ACEPTAR", errores
 
 
+# Incluir Easter Egg para YARASCA
+def mostrar_easter_egg(nombre):
+    if nombre == "YARASCA":
+        st.balloons()  # Mostrar globos para hacerlo más divertido
+        st.markdown("### 🎉 **¡YARASCA detected!** 🎉")
+        st.image("https://media.giphy.com/media/3o6MbtXrrp9cOP8zEK/giphy.gif", caption="¡Esto es un easter egg, profesor!")
+        st.markdown("¡Wow, ¡qué genial que hayas activado el Easter Egg! 🎉 Ahora sigamos aprendiendo 😎.")
+
+
 st.set_page_config(page_title="Analizador LL(1)", layout="wide")
 st.markdown("""<style>html, body, [class*="css"]  {font-family: 'Arial', sans-serif; font-size: 18px; background-color: #f4f4f4; color: #333;} th, td { text-align: center !important; padding: 6px 12px;} .stTable tbody tr td { font-size: 16px;} .stButton > button { background-color: #007bff; color: white; font-size: 18px; border-radius: 5px; padding: 8px 15px;} </style>""", unsafe_allow_html=True)
 
@@ -184,6 +193,9 @@ st.markdown("""#### **Instrucciones**: - Ingrese una gramática LL(1) usando `->
 
 gramatica_input = st.text_area("Gramática LL(1):", value="Struct -> struct Nombre { Comps }\nNombre -> id\nComps -> Comp Comps'\nComps' -> ; Comp Comps'\nComps' -> ε\nComp -> Type id\nType -> Typep\nType -> struct id\nType -> Pointer\nTypep -> int\nTypep -> char\nTypep -> bool\nTypep -> float\nPointer -> * id", height=220)
 cadena_input = st.text_input("Cadena de entrada:", "struct id { int id ; struct id id ; * id id }")
+
+# Aquí se llama al Easter Egg
+mostrar_easter_egg(cadena_input)
 
 st.markdown("### **Analizar**:")
 if st.button("Analizar"):
@@ -215,5 +227,3 @@ if st.button("Analizar"):
         st.error(f"❌ **Cadena rechazada. Se encontraron {num_errores} errores.**")
     
     st.markdown("### Desarrollado por José Eduardo Huamani Ñaupas")
-
-    
