@@ -198,3 +198,6 @@ if st.button("Analizar"):
         st.success("✅ **Cadena aceptada correctamente.**")
     else:
         st.error(f"❌ **Cadena rechazada. Se encontraron {num_errores} errores.**")
+    
+    # Propiedad de José Eduardo Huamani Ñaupas
+    st.markdown("### Propiedad de Josè Eduardo Huamani Ñaupas")
