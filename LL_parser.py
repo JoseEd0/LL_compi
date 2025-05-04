@@ -103,18 +103,34 @@ def obtener_follows(reglas, no_terminales, firsts, terminales):
     return follows
 
 def construir_tabla(reglas, firsts, follows, terminales, no_terminales):
-    tabla = {nt: {t: '' for t in terminales + ['$']} for nt in no_terminales}
+    tabla = {t: {nt: '' for nt in no_terminales} for t in terminales + ['$']}
     for r in reglas:
         A, des = [p.strip() for p in r.split('->')]
         secuencia = des.split()
         primeros = obtener_first_seq(secuencia, firsts, terminales, no_terminales)
         for t in primeros:
             if t != EPSILON:
-                tabla[A][t] = r
+                tabla[t][A] = r
         if EPSILON in primeros:
             for f in follows[A]:
-                tabla[A][f] = r
+                tabla[f][A] = r
+
+    for t in terminales + ['$']:
+        for nt in no_terminales:
+            if tabla[t][nt] == '':
+                if t in follows[nt] or t == '$':
+                    tabla[t][nt] = 'EXT'  
+                else:
+                    tabla[t][nt] = 'EXP'
     return tabla
+
+def es_ll1(tabla, no_terminales, terminales):
+    for nt in no_terminales:
+        for t1 in terminales:
+            for t2 in terminales:
+                if t1 != t2 and tabla[t1][nt] == tabla[t2][nt] and tabla[t1][nt] != '':
+                    return False
+    return True
 
 def analizar_cadena(cadena, tabla, simbolo_inicial, terminales, no_terminales, follows):
     pila = ['$', simbolo_inicial]
@@ -126,43 +142,46 @@ def analizar_cadena(cadena, tabla, simbolo_inicial, terminales, no_terminales, f
         tope = pila[-1]
         actual = tokens[apuntador]
         accion = ""
+
         if tope == actual == '$':
             accion = "ACEPTAR"
             pasos.append((len(pasos), ' '.join(pila), ' '.join(tokens), accion))
             break
+
         elif tope == actual:
             pila.pop()
             apuntador += 1
             accion = f"Match: {actual}"
+
         elif tope in terminales:
             accion = f"❌ ERROR: se esperaba '{tope}', se encontró '{actual}'"
             apuntador += 1
             errores += 1
+
         else:
-            if actual in tabla[tope] and tabla[tope][actual] != '':
-                regla = tabla[tope][actual]
+            if actual in tabla and tope in tabla[actual] and tabla[actual][tope] != '':
+                regla = tabla[actual][tope]
                 pila.pop()
                 rhs = regla.split('->')[1].strip().split()
                 if rhs[0] != EPSILON:
-                    pila.extend(reversed(rhs))
+                    pila.extend(reversed(rhs))  
                 accion = f"Expandir: {regla}"
             else:
                 errores += 1
                 accion = f"⚠️ EXPLORAR: Saltar {actual}"
                 apuntador += 1
+        
         pasos.append((len(pasos), ' '.join(pila), ' '.join(tokens[apuntador:]), accion))
 
     return pasos, errores == 0 and pasos[-1][3] == "ACEPTAR", errores
 
-# Interfaz visual
+
 st.set_page_config(page_title="Analizador LL(1)", layout="wide")
 st.markdown("""<style>html, body, [class*="css"]  {font-family: 'Arial', sans-serif; font-size: 18px; background-color: #f4f4f4; color: #333;} th, td { text-align: center !important; padding: 6px 12px;} .stTable tbody tr td { font-size: 16px;} .stButton > button { background-color: #007bff; color: white; font-size: 18px; border-radius: 5px; padding: 8px 15px;} </style>""", unsafe_allow_html=True)
 
-# Título
 st.title("🎯 **Analizador Predictivo LL(1)** - Estilo Clásico")
 st.markdown("""#### **Instrucciones**: - Ingrese una gramática LL(1) usando `->` para producciones y `ε` para vacío. - Separe tokens en la cadena con espacios. Ejemplo: `id + id * id` ### Gramática LL(1):""")
 
-# Inputs de gramática y cadena
 gramatica_input = st.text_area("Gramática LL(1):", value="Struct -> struct Nombre { Comps }\nNombre -> id\nComps -> Comp Comps'\nComps' -> ; Comp Comps'\nComps' -> ε\nComp -> Type id\nType -> Typep\nType -> struct id\nType -> Pointer\nTypep -> int\nTypep -> char\nTypep -> bool\nTypep -> float\nPointer -> * id", height=220)
 cadena_input = st.text_input("Cadena de entrada:", "struct id { int id ; struct id id ; * id id }")
 
@@ -174,7 +193,6 @@ if st.button("Analizar"):
     tabla = construir_tabla(reglas, firsts, follows, terminales, no_terminales)
     pasos, aceptada, num_errores = analizar_cadena(cadena_input, tabla, no_terminales[0], terminales, no_terminales, follows)
 
-    # Tabla First & Follow
     st.subheader("Tabla **First & Follow**")
     df_ff = pd.DataFrame({
         "No Terminal": no_terminales,
@@ -183,21 +201,19 @@ if st.button("Analizar"):
     })
     st.table(df_ff)
 
-    # Tabla LL(1)
     st.subheader("Tabla **LL(1)**")
     df_ll1 = pd.DataFrame(tabla).fillna('')
     st.table(df_ll1)
 
-    # Tabla de Análisis paso a paso
     st.subheader("**Tabla de Análisis paso a paso**")
     df_pasos = pd.DataFrame(pasos, columns=["Paso", "Pila", "Entrada", "Acción"])
     st.table(df_pasos)
 
-    # Resultado
     if aceptada:
         st.success("✅ **Cadena aceptada correctamente.**")
     else:
         st.error(f"❌ **Cadena rechazada. Se encontraron {num_errores} errores.**")
     
-    # Propiedad de José Eduardo Huamani Ñaupas
-    st.markdown("### Propiedad de Josè Eduardo Huamani Ñaupas")
+    st.markdown("### Desarrollado por José Eduardo Huamani Ñaupas")
+
+    
